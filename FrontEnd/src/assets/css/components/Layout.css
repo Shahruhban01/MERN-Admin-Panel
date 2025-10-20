@@ -1,0 +1,29 @@
+.dashboard-layout {
+  display: flex;
+  min-height: 100vh;
+  background: var(--bg-primary);
+}
+
+.main-layout-content {
+  flex: 1;
+  margin-top: 64px;
+  margin-left: 280px;
+  min-height: calc(100vh - 64px);
+  transition: margin-left 0.3s ease;
+  overflow-x: hidden;
+}
+
+/* Specific styling for dashboard page only */
+.main-layout-content.dashboard-page {
+  margin-left: 30px;
+}
+
+@media (max-width: 768px) {
+  .main-layout-content {
+    margin-left: 0;
+  }
+  
+  .main-layout-content.dashboard-page {
+    margin-left: 0;
+  }
+}
