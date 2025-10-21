@@ -36,24 +36,38 @@ function Profile() {
     loadProfile();
   }, []);
 
-  const loadProfile = async () => {
-    try {
-      const response = await profileAPI.getProfile();
-      const adminData = response.data.admin;
-      
-      setProfileData({
-        name: adminData.name || '',
-        email: adminData.email || '',
-        phone: adminData.phone || '',
-        bio: adminData.bio || '',
-        department: adminData.department || ''
-      });
-      
-      setAvatarPreview(adminData.avatar);
-    } catch (error) {
-      showMessage('error', 'Failed to load profile');
+const loadProfile = async () => {
+  try {
+    const response = await profileAPI.getProfile();
+    const adminData = response.data.admin;
+    
+    setProfileData({
+      name: adminData.name || '',
+      email: adminData.email || '',
+      phone: adminData.phone || '',
+      bio: adminData.bio || '',
+      department: adminData.department || ''
+    });
+    
+    // Set avatar preview - handle both full URL and relative path
+    if (adminData.avatar) {
+      // If it's a full URL (starts with http), use as is
+      if (adminData.avatar.startsWith('http')) {
+        setAvatarPreview(adminData.avatar);
+      } else if (adminData.avatar.startsWith('/uploads')) {
+        // If it's a relative path, prepend the API base URL
+        setAvatarPreview(`http://localhost:5000${adminData.avatar}`);
+      } else {
+        // Otherwise use as is (could be ui-avatars.com)
+        setAvatarPreview(adminData.avatar);
+      }
     }
-  };
+  } catch (error) {
+    console.error('Load profile error:', error);
+    showMessage('error', 'Failed to load profile');
+  }
+};
+
 
   const showMessage = (type, text) => {
     setMessage({ type, text });
@@ -95,31 +109,58 @@ function Profile() {
     }
   };
 
-  const handleProfileSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+const handleProfileSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
 
-    try {
-      // Update profile
-      const response = await profileAPI.updateProfile(profileData);
+  try {
+    // Update profile first
+    const response = await profileAPI.updateProfile(profileData);
+    
+    // Upload avatar if changed
+    if (avatarFile) {
+      const avatarResponse = await profileAPI.uploadAvatar(avatarFile);
+      setAvatarFile(null);
       
-      // Upload avatar if changed
-      if (avatarFile) {
-        await profileAPI.uploadAvatar(avatarFile);
-        setAvatarFile(null);
+      // Update avatar preview with new uploaded image
+      if (avatarResponse.data.avatar) {
+        setAvatarPreview(avatarResponse.data.avatar);
       }
-
-      // Update context
-      setAdmin(response.data.admin);
-      
-      showMessage('success', 'Profile updated successfully');
-      await loadProfile();
-    } catch (error) {
-      showMessage('error', error.response?.data?.message || 'Failed to update profile');
-    } finally {
-      setLoading(false);
     }
-  };
+
+    // Update context with the new admin data
+    if (response.data && response.data.admin) {
+      // Create updated admin object with full details
+      const updatedAdmin = {
+        ...admin,
+        ...response.data.admin
+      };
+      setAdmin(updatedAdmin);
+    }
+    
+    showMessage('success', 'Profile updated successfully');
+    
+    // Reload profile to get fresh data from server
+    await loadProfile();
+  } catch (error) {
+    console.error('Profile update error:', error);
+    
+    // More detailed error handling
+    if (error.response) {
+      // Server responded with error
+      showMessage('error', error.response.data?.message || 'Failed to update profile');
+    } else if (error.request) {
+      // Request made but no response
+      showMessage('error', 'No response from server. Please check your connection.');
+    } else {
+      // Something else happened
+      showMessage('error', 'Failed to update profile. Please try again.');
+    }
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
@@ -152,20 +193,37 @@ function Profile() {
     }
   };
 
-  const handleDeleteAvatar = async () => {
-    if (!window.confirm('Are you sure you want to delete your avatar?')) {
-      return;
-    }
+const handleDeleteAvatar = async () => {
+  // Only delete if there's a file selected for upload, not the existing avatar
+  if (avatarFile) {
+    // Just clear the file selection
+    setAvatarFile(null);
+    await loadProfile(); // Reload to show original avatar
+    showMessage('success', 'Avatar selection cleared');
+    return;
+  }
 
-    try {
-      const response = await profileAPI.deleteAvatar();
+  // If clicking the button when no file is selected, delete the existing avatar
+  if (!window.confirm('Are you sure you want to delete your profile picture?')) {
+    return;
+  }
+
+  try {
+    const response = await profileAPI.deleteAvatar();
+    
+    // Update avatar preview with the default avatar returned
+    if (response.data && response.data.avatar) {
       setAvatarPreview(response.data.avatar);
-      setAvatarFile(null);
-      showMessage('success', 'Avatar deleted successfully');
-    } catch (error) {
-      showMessage('error', 'Failed to delete avatar');
     }
-  };
+    
+    setAvatarFile(null);
+    showMessage('success', 'Profile picture deleted successfully');
+  } catch (error) {
+    console.error('Delete avatar error:', error);
+    showMessage('error', error.response?.data?.message || 'Failed to delete profile picture');
+  }
+};
+
 
   return (
     <div className="profile-container">
