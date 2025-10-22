@@ -5,7 +5,7 @@ import '../assets/css/components/Common.css';
 
 function ActivityLogs() {
   const [logs, setLogs] = useState([]);
-  const [filters, setFilters] = useState({ actionType: '' });
+  const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [meta, setMeta] = useState({ page: 1, limit: 10, total: 0 });
@@ -17,7 +17,7 @@ function ActivityLogs() {
     try {
       setLoading(true);
       const params = { page, limit: 10 };
-      if (filters.actionType) params.actionType = filters.actionType;
+      if (searchTerm) params.search = searchTerm;
       
       const response = await api.get('/activity-logs', { params });
       setLogs(response.data.data.logs || []);
@@ -51,9 +51,19 @@ function ActivityLogs() {
     setSelectedLog(null);
   };
 
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setPage(1); // Reset to page 1 when searching
+      loadLogs();
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
   useEffect(() => {
     loadLogs();
-  }, [page, filters]);
+  }, [page]);
 
   const totalPages = Math.ceil(meta.total / meta.limit) || 1;
 
@@ -101,13 +111,31 @@ function ActivityLogs() {
                 </svg>
                 <input
                   type="text"
-                  placeholder="Filter by action type (e.g., login, create, delete)"
-                  value={filters.actionType}
-                  onChange={(e) => {
-                    setFilters({ ...filters, actionType: e.target.value });
-                    setPage(1);
-                  }}
+                  placeholder="Search by admin, action, description, IP..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                 />
+                {searchTerm && (
+                  <button 
+                    className="search-clear"
+                    onClick={() => setSearchTerm('')}
+                    style={{ 
+                      position: 'absolute', 
+                      right: '12px', 
+                      background: 'none', 
+                      border: 'none', 
+                      cursor: 'pointer',
+                      padding: '4px',
+                      display: 'flex',
+                      alignItems: 'center'
+                    }}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                  </button>
+                )}
               </div>
               <div className="table-info">
                 <span>{meta.total || 0} log{meta.total !== 1 ? 's' : ''}</span>

@@ -7,10 +7,31 @@ const ActivityLog = require('../models/ActivityLog');
 // GET /api/activity-logs
 router.get('/', protect, checkPermission('activity_logs', 'view'), async (req, res) => {
   try {
-    const { actionType, admin, page = 1, limit = 10 } = req.query;
+    const { search, page = 1, limit = 10 } = req.query;
     const filter = {};
-    if (admin) filter.admin = admin;
-    if (actionType) filter.actionType = new RegExp(actionType, 'i');
+
+    // Universal search across multiple fields
+    if (search && search.trim()) {
+      const searchRegex = new RegExp(search, 'i');
+      
+      // Get admin IDs that match the search term
+      const Admin = require('../models/Admin');
+      const matchingAdmins = await Admin.find({
+        $or: [
+          { name: searchRegex },
+          { email: searchRegex }
+        ]
+      }).select('_id');
+      
+      const adminIds = matchingAdmins.map(a => a._id);
+
+      filter.$or = [
+        { description: searchRegex },
+        { actionType: searchRegex },
+        { ipAddress: searchRegex },
+        { admin: { $in: adminIds } }
+      ];
+    }
 
     const total = await ActivityLog.countDocuments(filter);
     const logs = await ActivityLog.find(filter)
@@ -26,7 +47,10 @@ router.get('/', protect, checkPermission('activity_logs', 'view'), async (req, r
     });
   } catch (error) {
     console.error('Error fetching logs:', error);
-    res.status(500).json({ success: false, message: 'Server error while fetching activity logs' });
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error while fetching activity logs' 
+    });
   }
 });
 

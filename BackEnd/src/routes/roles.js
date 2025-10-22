@@ -209,6 +209,7 @@ router.put('/:id', protect, checkPermission('roles', 'edit'), async (req, res) =
       message: 'Role updated successfully',
       data: { role }
     });
+    await logActivity(req.admin._id, 'role_change', `Updated role: ${role.name} with permissions: ${JSON.stringify(role.permissions)}`, { id: role._id }, req);
   } catch (error) {
     console.error('Update role error:', error);
     res.status(500).json({
@@ -265,6 +266,7 @@ router.delete('/:id', protect, checkPermission('roles', 'delete'), async (req, r
       success: true,
       message: 'Role deleted successfully'
     });
+        await logActivity(req.admin._id, 'delete', `Deleted role: ${role.name}, Permissions Were: ${JSON.stringify(role.permissions)}`, { id: role._id }, req);
   } catch (error) {
     console.error('Delete role error:', error);
     res.status(500).json({

@@ -77,7 +77,7 @@ router.put('/:id', protect, checkPermission('users', 'edit'), async (req, res) =
       data: { user }
     });
     // await logActivity(req.admin._id, 'create', `Created new user: ${user.name}`, { id: user._id }, req);
-    await logActivity(req.admin._id, 'edit', `Updated user: ${user.name}`, { id: user._id }, req);
+    await logActivity(req.admin._id, 'update', `Updated user: ${user.name}`, { id: user._id }, req);
 
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server error' });

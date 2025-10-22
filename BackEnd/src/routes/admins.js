@@ -5,6 +5,7 @@ const Admin = require('../models/Admin');
 const Role = require('../models/Role');
 const { protect } = require('../middleware/auth');
 const { checkPermission, isSuperAdmin } = require('../middleware/checkPermission');
+const { logActivity } = require('../utils/logActivity');
 
 // @route   GET /api/admins
 // @desc    Get all admins
@@ -185,6 +186,7 @@ router.post(
           }
         }
       });
+      await logActivity(req.admin._id, 'create', `Created Admin: ${adminWithRole.name} with Role: ${adminWithRole.roleId.name}`, { id: role._id }, req);
     } catch (error) {
       console.error('Create admin error:', error);
       res.status(500).json({
