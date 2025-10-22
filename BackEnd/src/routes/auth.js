@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const Admin = require('../models/Admin');
 const Role = require('../models/Role');
 const { protect } = require('../middleware/auth');
+const { logActivity } = require('../utils/logActivity');
 
 // Generate JWT Token
 const generateToken = (id) => {
@@ -221,6 +222,7 @@ router.post(
           }
         }
       });
+      await logActivity(admin._id, 'login', `Admin ${admin.email} logged in`, null, req);
     } catch (error) {
       console.error('Login error:', error);
       res.status(500).json({

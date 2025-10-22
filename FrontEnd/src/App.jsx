@@ -15,6 +15,7 @@ import Users from './components/Users';
 import Products from './components/Products';
 import Orders from './components/Orders';
 import Analytics from './components/Analytics';
+import ActivityLogs from './components/ActivityLogs';
 import './App.css';
 
 function App() {
@@ -38,6 +39,7 @@ function App() {
                 <Route path="/roles" element={<RoleManagement />} />
                 <Route path="/admins" element={<AdminManagement />} />
                 <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                <Route path="/activity-logs" element={<ActivityLogs />} />
               </Route>
             </Route>
           </Routes>

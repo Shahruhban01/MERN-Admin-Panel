@@ -18,7 +18,8 @@ const defaultRoles = [
       analytics: { view: true },
       roles: { view: true, create: true, edit: true, delete: true },
       admins: { view: true, create: true, edit: true, delete: true },
-      settings: { view: true, edit: true }
+      settings: { view: true, edit: true },
+      activity_logs: { view: true, edit: true, create: true, delete: true }
     }
   },
   {
@@ -34,7 +35,8 @@ const defaultRoles = [
       analytics: { view: true },
       roles: { view: false, create: false, edit: false, delete: false },
       admins: { view: false, create: false, edit: false, delete: false },
-      settings: { view: true, edit: false }
+      settings: { view: true, edit: false },
+      activity_logs: { view: true, edit: true, create: true, delete: true }
     }
   },
   {

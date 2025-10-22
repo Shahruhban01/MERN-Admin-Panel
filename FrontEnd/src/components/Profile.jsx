@@ -56,7 +56,7 @@ const loadProfile = async () => {
         setAvatarPreview(adminData.avatar);
       } else if (adminData.avatar.startsWith('/uploads')) {
         // If it's a relative path, prepend the API base URL
-        setAvatarPreview(`http://localhost:5000${adminData.avatar}`);
+        setAvatarPreview(`${import.meta.env.VITE_API_HOST}${adminData.avatar}`);
       } else {
         // Otherwise use as is (could be ui-avatars.com)
         setAvatarPreview(adminData.avatar);

@@ -3,6 +3,8 @@ import { useAuth } from '../context/AuthContext';
 import PermissionRoute from './PermissionRoute';
 import PermissionGuard from './PermissionGuard';
 import api from '../services/api';
+import AddUserModal from './AddUserModal';
+import EditUserModal from './EditUserModal';
 import '../assets/css/components/Common.css';
 
 function Users() {
@@ -11,6 +13,11 @@ function Users() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState({ type: '', text: '' });
   const [searchTerm, setSearchTerm] = useState('');
+  const [showModal, setShowModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+
+
 
   useEffect(() => {
     loadUsers();
@@ -37,23 +44,24 @@ function Users() {
     setTimeout(() => setMessage({ type: '', text: '' }), 4000);
   };
 
-  const handleDeleteUser = async (userId) => {
-    if (!window.confirm('Are you sure you want to delete this user?')) {
-      return;
-    }
+const handleDeleteUser = async (userId) => {
+  if (!window.confirm('Are you sure you want to delete this user?')) {
+    return;
+  }
 
-    try {
-      await api.delete(`/users/${userId}`);
-      showMessage('success', 'User deleted successfully');
-      loadUsers();
-    } catch (error) {
-      if (error.response?.status === 403) {
-        showMessage('error', 'You do not have permission to delete users');
-      } else {
-        showMessage('error', error.response?.data?.message || 'Failed to delete user');
-      }
+  try {
+    await api.delete(`/users/${userId}`);
+    showMessage('success', 'User deleted successfully');
+    loadUsers();
+  } catch (error) {
+    if (error.response?.status === 403) {
+      showMessage('error', 'You do not have permission to delete users');
+    } else {
+      showMessage('error', error.response?.data?.message || 'Failed to delete user');
     }
-  };
+  }
+};
+
 
   const filteredUsers = users.filter(user =>
     user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -68,15 +76,17 @@ function Users() {
             <h1>Users Management</h1>
             <p>Manage system users and their information</p>
           </div>
-          <PermissionGuard module="users" action="create">
-            <button className="btn-primary">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="12" y1="5" x2="12" y2="19"></line>
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-              </svg>
-              Add User
-            </button>
-          </PermissionGuard>
+<PermissionGuard module="users" action="create">
+  <button className="btn-primary" onClick={() => setShowModal(true)}>
+    <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+      <line x1="12" y1="5" x2="12" y2="19"></line>
+      <line x1="5" y1="12" x2="19" y2="12"></line>
+    </svg>
+    Add User
+  </button>
+</PermissionGuard>
+
+
         </div>
 
         {message.text && (
@@ -151,19 +161,27 @@ function Users() {
                         {(hasPermission('users', 'edit') || hasPermission('users', 'delete')) && (
                           <td>
                             <div className="action-buttons">
-                              <PermissionGuard module="users" action="edit">
-                                <button className="btn-icon" title="Edit user">
-                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                                  </svg>
-                                </button>
-                              </PermissionGuard>
+<PermissionGuard module="users" action="edit">
+  <button
+    className="btn-icon"
+    title="Edit user"
+    onClick={() => {
+      setSelectedUser(user);
+      setShowEditModal(true);
+    }}
+  >
+    <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+    </svg>
+  </button>
+</PermissionGuard>
+
                               
                               <PermissionGuard module="users" action="delete">
                                 <button 
                                   className="btn-icon btn-danger" 
-                                  onClick={() => handleDeleteUser(user.id)}
+                                  onClick={() => handleDeleteUser(user._id)}
                                   title="Delete user"
                                 >
                                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -198,7 +216,33 @@ function Users() {
           </>
         )}
       </div>
+{showModal && (
+  <AddUserModal
+    onClose={() => setShowModal(false)}
+    onSuccess={() => {
+      setShowModal(false);
+      loadUsers();
+    }}
+    showMessage={showMessage}
+  />
+)}
+
+{showEditModal && (
+  <EditUserModal
+    user={selectedUser}
+    onClose={() => setShowEditModal(false)}
+    onSuccess={() => {
+      setShowEditModal(false);
+      loadUsers();
+    }}
+    showMessage={showMessage}
+  />
+)}
+
+
     </PermissionRoute>
+    
+
   );
 }
 

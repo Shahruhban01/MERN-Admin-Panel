@@ -5,6 +5,8 @@ const Role = require('../models/Role');
 const Admin = require('../models/Admin');
 const { protect } = require('../middleware/auth');
 const { checkPermission } = require('../middleware/checkPermission');
+const { logActivity } = require('../utils/logActivity');
+
 
 // @route   GET /api/roles
 // @desc    Get all roles
@@ -130,6 +132,7 @@ router.post(
         message: 'Role created successfully',
         data: { role }
       });
+      await logActivity(req.admin._id, 'create', `Created new role: ${role.name} with permissions: ${JSON.stringify(role.permissions)}`, { id: role._id }, req);
     } catch (error) {
       console.error('Create role error:', error);
       res.status(500).json({

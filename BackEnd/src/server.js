@@ -11,7 +11,7 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
   credentials: true
 }));
 app.use(express.json());
@@ -29,6 +29,9 @@ app.use('/api/users', require('./routes/users'));
 app.use('/api/products', require('./routes/products'));
 app.use('/api/orders', require('./routes/orders'));
 app.use('/api/analytics', require('./routes/analytics'));
+app.use('/api/activity-logs', require('./routes/activityLogs'));
+
+app.use((req, res) => res.status(404).json({ success: false, message: 'Route not found' }));
 
 // Health check
 app.get('/api/health', (req, res) => {
