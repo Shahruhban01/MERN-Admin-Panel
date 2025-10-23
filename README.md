@@ -510,5 +510,8 @@ All features implemented and tested:
 - ✅ File upload working
 - ✅ Search and filter features active
 
+
+## Added CI/CD Pipeline
+
 **The admin panel is ready for use, But with proper credits!**
 **Built with ❤️ By Ruhban Abdullah**
