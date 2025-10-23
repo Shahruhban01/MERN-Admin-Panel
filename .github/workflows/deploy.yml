@@ -1,4 +1,4 @@
-name: 🚀 Deploy to Google VM
+name: Deploy to Google VM
 
 on:
   push:
@@ -10,31 +10,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 🧱 Checkout code
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: ⚙️ Setup Node 
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: 🔑 Setup SSH
+      - name: Setup SSH and deploy
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
-
-      - name: 🚀 Deploy code to server
-        run: |
-          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
-            cd /var/www/html/new/MERN-Admin-Panel
-            git pull origin main
-            cd FrontEnd
-            npm install
-            npm run build
-            cd ../BackEnd
-            npm install
-            pm2 restart backend --update-env
-            sudo systemctl reload nginx
-          EOF
+          ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_HOST "echo '✅ SSH connection successful!'"
