@@ -3,30 +3,37 @@ name: 🚀 Auto Deploy to Google VM
 on:
   push:
     branches:
-      - main  # or whatever branch you deploy from
+      - main  # Branch to trigger deployment
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
+      # Checkout the repository
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # Start SSH agent and add deploy key
       - name: Setup SSH
         uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.DEPLOY_KEY }}
 
+      # Configure Git to use SSH for GitHub
+      - name: Configure Git for SSH
+        run: |
+          git config --global url."git@github.com:".insteadOf "https://github.com/"
+
+      # Deploy to the Google VM
       - name: Deploy to Google VM
         run: |
           ssh -o StrictHostKeyChecking=no ruhbangaming715@34.134.5.194 << 'EOF'
-            cd /var/www/html/new/MERN-Admin-Panel
-
-            echo "🧹 Cleaning up old build..."
-            rm -rf FrontEnd/dist
+            echo "🧹 Cleaning up old frontend build..."
+            rm -rf /var/www/html/new/MERN-Admin-Panel/FrontEnd/dist
 
             echo "⬇️ Pulling latest changes..."
+            cd /var/www/html/new/MERN-Admin-Panel
             git pull origin main
 
             echo "⚙️ Installing backend dependencies..."
