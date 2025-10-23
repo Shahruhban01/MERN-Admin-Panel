@@ -1,4 +1,4 @@
-name: Deploy to Google VM
+name: CI/CD - Deploy MERN Admin Panel
 
 on:
   push:
@@ -10,10 +10,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Setup SSH and deploy
+      - name: Deploy to Google VM
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           SERVER_USER: ${{ secrets.SERVER_USER }}
@@ -22,4 +22,24 @@ jobs:
           mkdir -p ~/.ssh
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_HOST "echo '✅ SSH connection successful!'"
+
+          ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_HOST << 'EOF'
+          cd /var/www/html/MERN-Admin-Panel
+
+          echo "🔄 Pulling latest code..."
+          git pull origin main
+
+          echo "📦 Installing backend dependencies..."
+          cd BackEnd
+          npm install --production
+
+          echo "🚀 Restarting backend server..."
+          pm2 restart all || pm2 start server.js --name backend
+
+          echo "🧱 Building frontend..."
+          cd ../FrontEnd
+          npm install
+          npm run build
+
+          echo "✅ Deployment complete!"
+          EOF
