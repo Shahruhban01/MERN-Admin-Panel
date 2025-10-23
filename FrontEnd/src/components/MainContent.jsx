@@ -5,7 +5,7 @@ function MainContent({ sidebarOpen }) {
   const kpiMetrics = [
     { 
       title: 'Total Revenue', 
-      value: '$54,239', 
+      value: '$00000', 
       change: '+12.5%',
       changeValue: '+$4,200',
       positive: true,
