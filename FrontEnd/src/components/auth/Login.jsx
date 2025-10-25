@@ -83,7 +83,7 @@ function Login() {
               </div>
               <h1>Admin Dashboard</h1>
             </div>
-            <h2>Welcome Back</h2>
+              <h2>Welcome Back Ruhban!</h2>
             <p>Sign in to your account to continue</p>
           </div>
 
