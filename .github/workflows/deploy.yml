@@ -3,36 +3,34 @@ name: 🚀 Auto Deploy to Google VM
 on:
   push:
     branches:
-      - main  # Branch to trigger deployment
+      - main
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout the repository
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Start SSH agent and add deploy key
-      - name: Setup SSH
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.DEPLOY_KEY }}
-
-      # Configure Git to use SSH for GitHub
-      - name: Configure Git for SSH
+      - name: Setup SSH key
         run: |
-          git config --global url."git@github.com:".insteadOf "https://github.com/"
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VM_SSH_KEY }}" > ~/.ssh/github_deploy_key
+          chmod 600 ~/.ssh/github_deploy_key
+          ssh-keyscan -H 34.134.5.194 >> ~/.ssh/known_hosts
 
-      # Deploy to the Google VM
+      - name: Test SSH connection
+        run: |
+          ssh -i ~/.ssh/github_deploy_key -o StrictHostKeyChecking=no ruhbangaming715@34.134.5.194 "echo ✅ SSH Connection Successful"
+
       - name: Deploy to Google VM
         run: |
-          ssh -o StrictHostKeyChecking=no ruhbangaming715@34.134.5.194 << 'EOF'
-            echo "🧹 Cleaning up old frontend build..."
+          ssh -i ~/.ssh/github_deploy_key -o StrictHostKeyChecking=no ruhbangaming715@34.134.5.194 << 'EOF'
+            echo "🧹 Cleaning old frontend build..."
             rm -rf /var/www/html/new/MERN-Admin-Panel/FrontEnd/dist
 
-            echo "⬇️ Pulling latest changes..."
+            echo "⬇️ Pulling latest code..."
             cd /var/www/html/new/MERN-Admin-Panel
             git pull origin main
 
