@@ -17,6 +17,9 @@ import Orders from './components/Orders';
 import Analytics from './components/Analytics';
 import ActivityLogs from './components/ActivityLogs';
 import AppSettings from './components/AppSettings';
+import Pages from './components/pages/Pages';
+import PageBuilder from './components/pages/PageBuilder';
+import DynamicPageView from './components/pages/DynamicPageView';
 import './App.css';
 
 function App() {
@@ -42,7 +45,18 @@ function App() {
                 <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/activity-logs" element={<ActivityLogs />} />
                 <Route path="/app-settings" element={<AppSettings />} />
-              </Route>
+
+              {/* Page Builder */}
+                  <Route path="pages" element={<Pages />} />
+                  <Route path="pages/create" element={<PageBuilder />} />
+                  <Route path="pages/edit/:id" element={<PageBuilder />} />
+                  
+                  {/* Dynamic Pages */}
+                  <Route path="page/:slug" element={<DynamicPageView />} />
+                </Route>
+
+                {/* Catch all */}
+                <Route path="*" element={<Navigate to="/" replace />} />
             </Route>
           </Routes>
         </AuthProvider>

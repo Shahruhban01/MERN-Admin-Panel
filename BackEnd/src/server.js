@@ -35,6 +35,7 @@ app.use('/api/orders', require('./routes/orders'));
 app.use('/api/analytics', require('./routes/analytics'));
 app.use('/api/activity-logs', require('./routes/activityLogs'));
 app.use('/api/app-settings', require('./routes/appSettings'));
+app.use('/api/pages', require('./routes/pages'));
 
 
 app.use((req, res) => res.status(404).json({ success: false, message: 'Route not found' }));

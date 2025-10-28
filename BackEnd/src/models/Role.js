@@ -54,6 +54,12 @@ const roleSchema = new mongoose.Schema({
       edit: { type: Boolean, default: false },
       delete: { type: Boolean, default: false }
     },
+    pages: {
+      view: { type: Boolean, default: false },
+      create: { type: Boolean, default: false },
+      edit: { type: Boolean, default: false },
+      delete: { type: Boolean, default: false }
+    },
     settings: {
       view: { type: Boolean, default: false },
       edit: { type: Boolean, default: false }
@@ -77,7 +83,7 @@ const roleSchema = new mongoose.Schema({
   }
 });
 
-roleSchema.pre('save', function(next) {
+roleSchema.pre('save', function (next) {
   this.updatedAt = Date.now();
   next();
 });

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import api from '../services/api';
 import '../assets/css/components/Sidebar.css';
 
 function Sidebar({ isOpen, toggleSidebar }) {
@@ -8,12 +9,32 @@ function Sidebar({ isOpen, toggleSidebar }) {
   const { admin, hasPermission } = useAuth();
   const [expandedMenus, setExpandedMenus] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [dynamicPages, setDynamicPages] = useState([]);
+  const [loadingPages, setLoadingPages] = useState(true);
 
-  // const isSuperAdmin = admin?.role === 'super-admin';
   const isSuperAdmin = admin?.roleDetails?.isSuperAdmin || false;
 
-  // Navigation structure with permission requirements
-  const navigationItems = [
+  // Load dynamic pages on mount
+  useEffect(() => {
+    loadDynamicPages();
+  }, []);
+
+  const loadDynamicPages = async () => {
+    try {
+      setLoadingPages(true);
+      const response = await api.get('/pages?sidebarOnly=true');
+      const pages = response.data.data.pages || [];
+      setDynamicPages(pages);
+    } catch (error) {
+      console.error('Failed to load dynamic pages:', error);
+      setDynamicPages([]);
+    } finally {
+      setLoadingPages(false);
+    }
+  };
+
+  // Static navigation structure
+  const staticNavigationItems = [
     { 
       id: 'dashboard',
       name: 'Dashboard', 
@@ -27,7 +48,8 @@ function Sidebar({ isOpen, toggleSidebar }) {
       ), 
       path: '/dashboard',
       keywords: ['home', 'overview', 'main'],
-      permission: { module: 'dashboard', action: 'view' }
+      permission: { module: 'dashboard', action: 'view' },
+      sidebarPosition: 'top'
     },
     { 
       id: 'users',
@@ -42,7 +64,8 @@ function Sidebar({ isOpen, toggleSidebar }) {
       ), 
       path: '/users',
       keywords: ['customers', 'accounts', 'members'],
-      permission: { module: 'users', action: 'view' }
+      permission: { module: 'users', action: 'view' },
+      sidebarPosition: 'main'
     },
     { 
       id: 'products',
@@ -55,6 +78,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
       path: '/products',
       keywords: ['items', 'inventory', 'catalog'],
       permission: { module: 'products', action: 'view' },
+      sidebarPosition: 'main',
       submenu: [
         { 
           name: 'All Products', 
@@ -109,7 +133,8 @@ function Sidebar({ isOpen, toggleSidebar }) {
       ), 
       path: '/orders',
       keywords: ['sales', 'purchases', 'transactions'],
-      permission: { module: 'orders', action: 'view' }
+      permission: { module: 'orders', action: 'view' },
+      sidebarPosition: 'main'
     },
     { 
       id: 'analytics',
@@ -122,6 +147,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
       path: '/analytics',
       keywords: ['reports', 'statistics', 'insights', 'charts'],
       permission: { module: 'analytics', action: 'view' },
+      sidebarPosition: 'main',
       submenu: [
         { 
           name: 'Overview', 
@@ -163,6 +189,34 @@ function Sidebar({ isOpen, toggleSidebar }) {
       ]
     },
     {
+      id: 'data-models',
+      name: 'Data Models',
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+          <polyline points="13 2 13 9 20 9"></polyline>
+        </svg>
+      ),
+      path: '/data-models',
+      keywords: ['collections', 'schema', 'database'],
+      permission: { module: 'data_models', action: 'view' },
+      sidebarPosition: 'main'
+    },
+    {
+      id: 'pages',
+      name: 'Page Builder',
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+        </svg>
+      ),
+      path: '/pages',
+      keywords: ['cms', 'content', 'custom pages'],
+      permission: { module: 'pages', action: 'view' },
+      sidebarPosition: 'main'
+    },
+    {
       id: 'settings',
       name: 'Settings',
       icon: (
@@ -173,18 +227,20 @@ function Sidebar({ isOpen, toggleSidebar }) {
       ),
       keywords: ['configuration', 'preferences', 'account'],
       permission: { module: 'settings', action: 'view' },
+      sidebarPosition: 'bottom',
       submenu: [
         {
-  name: 'App Settings',
-  path: '/app-settings',
-  icon:         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <circle cx="12" cy="12" r="3"></circle>
-          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-        </svg>,
-  keywords: ['configuration', 'system'],
-  permission: { module: 'settings', action: 'view' }
-},
-
+          name: 'App Settings',
+          path: '/app-settings',
+          icon: (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+          ),
+          keywords: ['configuration', 'system'],
+          permission: { module: 'settings', action: 'view' }
+        },
         { 
           name: 'Profile', 
           path: '/profile',
@@ -198,39 +254,17 @@ function Sidebar({ isOpen, toggleSidebar }) {
           permission: { module: 'settings', action: 'view' }
         },
         { 
-          name: 'Preferences', 
-          path: '/settings',
-          icon: (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
-              <circle cx="12" cy="12" r="3"></circle>
-            </svg>
-          ),
-          keywords: ['theme', 'notifications'],
-          permission: { module: 'settings', action: 'view' }
-        },
-                { 
           name: 'Activity Logs', 
           path: '/activity-logs',
           icon: (
-            <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-            <line x1="9" y1="9" x2="15" y2="9"></line>
-            <line x1="9" y1="13" x2="15" y2="13"></line>
-            <line x1="9" y1="17" x2="13" y2="17"></line>
-          </svg>
-
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="9" y1="9" x2="15" y2="9"></line>
+              <line x1="9" y1="13" x2="15" y2="13"></line>
+              <line x1="9" y1="17" x2="13" y2="17"></line>
+            </svg>
           ),
-          keywords: ['theme', 'logs'],
+          keywords: ['logs', 'history', 'audit'],
           permission: { module: 'activity_logs', action: 'view' }
         },
         ...(isSuperAdmin ? [
@@ -263,9 +297,38 @@ function Sidebar({ isOpen, toggleSidebar }) {
     }
   ];
 
+  // Convert dynamic pages to navigation items
+  const dynamicNavigationItems = useMemo(() => {
+    return dynamicPages.map(page => ({
+      id: `dynamic-page-${page._id}`,
+      name: page.title,
+      icon: page.icon ? (
+        <span style={{ fontSize: '20px' }}>{page.icon}</span>
+      ) : (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+        </svg>
+      ),
+      path: `/page/${page.slug}`,
+      keywords: [page.title.toLowerCase(), page.slug, ...(page.description ? [page.description.toLowerCase()] : [])],
+      sidebarPosition: page.sidebar.position,
+      order: page.sidebar.order,
+      isDynamic: true
+    }));
+  }, [dynamicPages]);
+
+  // Merge static and dynamic navigation
+  const allNavigationItems = useMemo(() => {
+    return [...staticNavigationItems, ...dynamicNavigationItems];
+  }, [staticNavigationItems, dynamicNavigationItems]);
+
   // Filter navigation based on permissions
   const accessibleNavigation = useMemo(() => {
-    return navigationItems.filter(item => {
+    return allNavigationItems.filter(item => {
+      // Dynamic pages don't need permission check (already filtered by backend)
+      if (item.isDynamic) return true;
+
       // Check if user has permission for parent item
       if (item.permission) {
         const hasAccess = hasPermission(item.permission.module, item.permission.action);
@@ -287,42 +350,75 @@ function Sidebar({ isOpen, toggleSidebar }) {
 
       return true;
     });
-  }, [admin, hasPermission]);
+  }, [allNavigationItems, admin, hasPermission]);
+
+  // Group by sidebar position and sort
+  const groupedNavigation = useMemo(() => {
+    const groups = {
+      top: [],
+      main: [],
+      bottom: []
+    };
+
+    accessibleNavigation.forEach(item => {
+      const position = item.sidebarPosition || 'main';
+      if (groups[position]) {
+        groups[position].push(item);
+      }
+    });
+
+    // Sort each group by order
+    Object.keys(groups).forEach(key => {
+      groups[key].sort((a, b) => (a.order || 0) - (b.order || 0));
+    });
+
+    return groups;
+  }, [accessibleNavigation]);
 
   // Filter navigation items based on search
   const filteredNavigation = useMemo(() => {
-    if (!searchQuery.trim()) return accessibleNavigation;
+    if (!searchQuery.trim()) return groupedNavigation;
 
     const query = searchQuery.toLowerCase();
-    return accessibleNavigation.map(item => {
-      const matchesParent = 
-        item.name.toLowerCase().includes(query) ||
-        item.keywords?.some(keyword => keyword.includes(query));
+    const filtered = {
+      top: [],
+      main: [],
+      bottom: []
+    };
 
-      if (item.submenu) {
-        const filteredSubmenu = item.submenu.filter(subItem =>
-          subItem.name.toLowerCase().includes(query) ||
-          subItem.keywords?.some(keyword => keyword.includes(query))
-        );
+    Object.keys(groupedNavigation).forEach(position => {
+      groupedNavigation[position].forEach(item => {
+        const matchesParent = 
+          item.name.toLowerCase().includes(query) ||
+          item.keywords?.some(keyword => keyword.includes(query));
 
-        if (filteredSubmenu.length > 0 || matchesParent) {
-          return {
-            ...item,
-            submenu: filteredSubmenu,
-            forceExpanded: filteredSubmenu.length > 0
-          };
+        if (item.submenu) {
+          const filteredSubmenu = item.submenu.filter(subItem =>
+            subItem.name.toLowerCase().includes(query) ||
+            subItem.keywords?.some(keyword => keyword.includes(query))
+          );
+
+          if (filteredSubmenu.length > 0 || matchesParent) {
+            filtered[position].push({
+              ...item,
+              submenu: filteredSubmenu,
+              forceExpanded: filteredSubmenu.length > 0
+            });
+          }
+        } else if (matchesParent) {
+          filtered[position].push(item);
         }
-        return null;
-      }
+      });
+    });
 
-      return matchesParent ? item : null;
-    }).filter(Boolean);
-  }, [searchQuery, accessibleNavigation]);
+    return filtered;
+  }, [searchQuery, groupedNavigation]);
 
   // Auto-expand menus when searching
   useEffect(() => {
     if (searchQuery.trim()) {
-      const expandedIds = filteredNavigation
+      const expandedIds = Object.values(filteredNavigation)
+        .flat()
         .filter(item => item.submenu && item.forceExpanded)
         .map(item => item.id);
       setExpandedMenus(expandedIds);
@@ -331,7 +427,8 @@ function Sidebar({ isOpen, toggleSidebar }) {
 
   // Auto-expand active menu
   useEffect(() => {
-    const activeItem = accessibleNavigation.find(item => {
+    const allItems = Object.values(groupedNavigation).flat();
+    const activeItem = allItems.find(item => {
       if (item.submenu) {
         return item.submenu.some(sub => location.pathname === sub.path);
       }
@@ -341,7 +438,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
     if (activeItem && activeItem.submenu && !expandedMenus.includes(activeItem.id)) {
       setExpandedMenus(prev => [...prev, activeItem.id]);
     }
-  }, [location.pathname, accessibleNavigation]);
+  }, [location.pathname, groupedNavigation]);
 
   const toggleMenu = (menuId) => {
     setExpandedMenus(prev =>
@@ -358,6 +455,64 @@ function Sidebar({ isOpen, toggleSidebar }) {
       toggleSidebar();
     }
   };
+
+  const renderNavigationItems = (items) => {
+    return items.map((item) => (
+      <li key={item.id} className="sidebar-item">
+        {item.submenu ? (
+          <>
+            <button
+              className={`sidebar-link expandable ${
+                expandedMenus.includes(item.id) || item.forceExpanded ? 'expanded' : ''
+              }`}
+              onClick={() => toggleMenu(item.id)}
+            >
+              <span className="sidebar-icon">{item.icon}</span>
+              <span className="sidebar-text">{item.name}</span>
+              <svg 
+                className="expand-icon" 
+                width="16" 
+                height="16" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2"
+              >
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </button>
+            {(expandedMenus.includes(item.id) || item.forceExpanded) && item.submenu.length > 0 && (
+              <ul className="sidebar-submenu">
+                {item.submenu.map((subItem, subIndex) => (
+                  <li key={subIndex}>
+                    <Link
+                      to={subItem.path}
+                      className={`sidebar-sublink ${isActive(subItem.path) ? 'active' : ''}`}
+                      onClick={handleLinkClick}
+                    >
+                      <span className="sidebar-icon">{subItem.icon}</span>
+                      <span className="sidebar-text">{subItem.name}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </>
+        ) : (
+          <Link 
+            to={item.path} 
+            className={`sidebar-link ${isActive(item.path) ? 'active' : ''}`}
+            onClick={handleLinkClick}
+          >
+            <span className="sidebar-icon">{item.icon}</span>
+            <span className="sidebar-text">{item.name}</span>
+          </Link>
+        )}
+      </li>
+    ));
+  };
+
+  const hasAnyItems = Object.values(filteredNavigation).some(items => items.length > 0);
 
   return (
     <>
@@ -395,79 +550,59 @@ function Sidebar({ isOpen, toggleSidebar }) {
         </div>
 
         <nav className="sidebar-nav">
-          <ul className="sidebar-menu">
-            {filteredNavigation.length > 0 ? (
-              filteredNavigation.map((item) => (
-                <li key={item.id} className="sidebar-item">
-                  {item.submenu ? (
-                    <>
-                      <button
-                        className={`sidebar-link expandable ${
-                          expandedMenus.includes(item.id) || item.forceExpanded ? 'expanded' : ''
-                        }`}
-                        onClick={() => toggleMenu(item.id)}
-                      >
-                        <span className="sidebar-icon">{item.icon}</span>
-                        <span className="sidebar-text">{item.name}</span>
-                        <svg 
-                          className="expand-icon" 
-                          width="16" 
-                          height="16" 
-                          viewBox="0 0 24 24" 
-                          fill="none" 
-                          stroke="currentColor" 
-                          strokeWidth="2"
-                        >
-                          <polyline points="6 9 12 15 18 9"></polyline>
-                        </svg>
-                      </button>
-                      {(expandedMenus.includes(item.id) || item.forceExpanded) && item.submenu.length > 0 && (
-                        <ul className="sidebar-submenu">
-                          {item.submenu.map((subItem, subIndex) => (
-                            <li key={subIndex}>
-                              <Link
-                                to={subItem.path}
-                                className={`sidebar-sublink ${isActive(subItem.path) ? 'active' : ''}`}
-                                onClick={handleLinkClick}
-                              >
-                                <span className="sidebar-icon">{subItem.icon}</span>
-                                <span className="sidebar-text">{subItem.name}</span>
-                              </Link>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </>
-                  ) : (
-                    <Link 
-                      to={item.path} 
-                      className={`sidebar-link ${isActive(item.path) ? 'active' : ''}`}
-                      onClick={handleLinkClick}
-                    >
-                      <span className="sidebar-icon">{item.icon}</span>
-                      <span className="sidebar-text">{item.name}</span>
-                    </Link>
-                  )}
-                </li>
-              ))
-            ) : (
-              <li className="sidebar-empty">
-                <div className="empty-state-sidebar">
-                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
-                    <circle cx="11" cy="11" r="8"></circle>
-                    <path d="m21 21-4.35-4.35"></path>
-                  </svg>
-                  <p>No results found</p>
-                  <small>Try a different search term</small>
-                </div>
-              </li>
-            )}
-          </ul>
+          {loadingPages ? (
+            <div className="sidebar-loading">
+              <div className="spinner-small"></div>
+              <span>Loading navigation...</span>
+            </div>
+          ) : hasAnyItems ? (
+            <>
+              {/* Top Section */}
+              {filteredNavigation.top.length > 0 && (
+                <ul className="sidebar-menu">
+                  {renderNavigationItems(filteredNavigation.top)}
+                </ul>
+              )}
+
+              {/* Main Section */}
+              {filteredNavigation.main.length > 0 && (
+                <>
+                  {filteredNavigation.top.length > 0 && <div className="sidebar-divider"></div>}
+                  <div className="sidebar-section-title">Management</div>
+                  <ul className="sidebar-menu">
+                    {renderNavigationItems(filteredNavigation.main)}
+                  </ul>
+                </>
+              )}
+
+              {/* Bottom Section */}
+              {filteredNavigation.bottom.length > 0 && (
+                <>
+                  <div className="sidebar-divider"></div>
+                  <div className="sidebar-section-title">System</div>
+                  <ul className="sidebar-menu">
+                    {renderNavigationItems(filteredNavigation.bottom)}
+                  </ul>
+                </>
+              )}
+            </>
+          ) : (
+            <div className="sidebar-empty">
+              <div className="empty-state-sidebar">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <path d="m21 21-4.35-4.35"></path>
+                </svg>
+                <p>No results found</p>
+                <small>Try a different search term</small>
+              </div>
+            </div>
+          )}
         </nav>
 
         <div className="sidebar-footer">
           <div className="sidebar-user">
-            <img src={admin?.avatar} alt={admin?.name} className="sidebar-user-avatar" />
+            <img src={admin?.avatar || '/default-avatar.png'} alt={admin?.name} className="sidebar-user-avatar" />
             <div className="sidebar-user-info">
               <span className="sidebar-user-name">{admin?.name}</span>
               <span className="sidebar-user-role">
