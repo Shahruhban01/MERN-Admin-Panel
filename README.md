@@ -1,4 +1,3 @@
-Here's the updated comprehensive README with all the latest features:
 
 ***
 
